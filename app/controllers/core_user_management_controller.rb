@@ -1,0 +1,383 @@
+
+class CoreUserManagementController < ApplicationController
+
+  before_filter :check_user, :except => [:login, :authenticate, :logout, :verify]
+
+  def login
+
+    # Track final destination
+    file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
+
+    if !params[:ext].nil?
+
+      f = File.open(file, "w")
+
+      f.write("#{Rails.env}:\n    host.path.login: #{params[:src] rescue ""}#{request.referrer}")
+
+      f.close
+
+    end
+
+    @destination = nil
+
+    if File.exists?(file)
+
+      @destination = YAML.load_file(file)["#{Rails.env
+        }"]["host.path.login"].strip
+
+    end
+
+  end
+
+  def authenticate
+    user = CoreUser.authenticate(params[:login], params[:password]) rescue nil
+
+    if user.nil?
+      flash[:error] = "Wrong username or password!"
+      redirect_to request.referrer and return
+    end
+
+    CoreUserProperty.find_by_user_id_and_property(user.id, "Token").delete rescue nil
+
+    CoreUserProperty.create(
+      :user_id => user.id,
+      :property => "Token",
+      :property_value => CoreUser.random_string(16)
+    )
+
+    # Track final destination
+    file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
+
+    @destination = nil
+
+    if File.exists?(file)
+
+      @destination = YAML.load_file(file)["#{Rails.env
+        }"]["host.path.login"].strip
+
+    end
+
+    if !@destination.nil?
+      q = (@destination.match(/\?/))
+      u = (@destination.match(/user_id=(\d+)/))
+
+      if u
+
+        @destination = @destination.gsub(/user_id=(\d+)/, "user_id=#{user.id}")
+        
+        redirect_to "http://#{@destination}" and return
+
+      else
+
+        # raise "http://#{@destination}#{(!q ? "?" : "")}user_id=#{user.id}".to_yaml
+
+        redirect_to "http://#{@destination}#{(!q ? "?" : "")}user_id=#{user.id}" and return
+
+      end
+
+    else
+
+      redirect_to "http://#{request.raw_host_with_port}?user_id=#{user.id}" and return
+
+    end
+    
+  end
+
+  def new_user
+    @roles = CoreRole.find(:all).collect{|r|r.role}
+  end
+
+  def create_user
+
+    existing = CoreUser.find_by_username(params[:login]) rescue nil
+
+    if !existing.nil?
+      flash[:error] = "Username already taken!"
+      redirect_to "/new_user?user_id=#{@user.id}&first_name=#{params[:first_name]
+          }&last_name=#{params[:last_name]}&gender=#{params[:gender]}" and return
+    end
+
+    user = CoreUser.create(
+      :username => params[:login],
+      :password => params[:password],
+      :creator => params[:user_id],
+      :date_created => Date.today,
+      :uuid => ActiveRecord::Base.connection.select_one("SELECT UUID() as uuid")['uuid']
+    )
+
+    CoreUserProperty.create(
+      :user_id => user.id,
+      :property => "First Name",
+      :property_value => (params[:first_name] rescue nil)
+    )
+
+    CoreUserProperty.create(
+      :user_id => user.id,
+      :property => "Last Name",
+      :property_value => (params[:last_name] rescue nil)
+    )
+
+    CoreUserProperty.create(
+      :user_id => user.id,
+      :property => "Gender",
+      :property_value => (params[:gender] rescue nil)
+    )
+
+    CoreUserProperty.create(
+      :user_id => user.id,
+      :property => "Status",
+      :property_value => "PENDING"
+    )
+
+    params[:roles].each do |role|
+        
+      CoreUserRole.create(
+        :user_id => user.id,
+        :role => role
+      )
+        
+    end
+
+    redirect_to "/user_list?user_id=#{(params[:id] || params[:user_id])}" and return
+  end
+
+  def select_user_task
+
+    # Track final destination
+    file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
+
+    if !params[:ext].nil?
+
+      f = File.open(file, "w")
+
+      f.write("#{Rails.env}:\n    host.path.login: #{params[:src] rescue ""}#{request.referrer}")
+
+      f.close
+
+    end
+
+    @destination = "/logout/#{@user.id}"
+
+    if File.exists?(file)
+
+      @destination = YAML.load_file(file)["#{Rails.env
+        }"]["host.path.login"].strip
+
+    end
+
+  end
+
+  def user_list
+    @users = CoreUser.find(:all).collect { |user|
+      [
+        user.name,
+        user.username,
+        user.gender,
+        user.user_roles.collect{|r|
+          r.role
+        },
+        (user.status.property_value rescue ""),
+        user.id
+      ]
+    }
+
+    @user = CoreUser.find((params[:user_id] || params[:id])) rescue nil
+    
+    if @user.status_value.to_s.downcase != "pending" and @user.status_value.to_s.downcase != "blocked"
+      
+      @can_edit = true
+
+    else
+
+      @can_edit = false
+
+    end
+
+    redirect_to "/login" and return if @user.nil?
+
+  end
+
+  def edit_user_status
+
+    if params[:target_id].nil?
+      flash[:error] = "Missing User ID!"
+      redirect_to request.referrer and return
+    end
+
+    @target = CoreUser.find(params[:target_id]) rescue nil
+
+  end
+
+  def update_user_status
+
+    property = CoreUserProperty.find_by_property_and_user_id("Status", params[:target_id]) rescue nil
+
+    if property.nil?
+      CoreUserProperty.create(
+        :user_id => params[:target_id],
+        :property => "Status",
+        :property_value => (params[:status] rescue nil)
+      )
+    else
+      property.update_attributes(:property_value => params[:status])
+    end
+
+    flash[:notice] = "Status changed to #{params[:status].upcase}"
+    redirect_to "/user_list?user_id=#{@user.id}" and return
+  end
+
+  def edit_roles
+
+    @target = CoreUser.find(params[:target_id]) rescue nil
+    
+    current_roles = @target.user_roles.collect{|r| r.role}
+
+    @roles = CoreRole.find(:all).collect{|r|r.role} - current_roles
+    
+  end
+
+  def add_user_roles
+
+    @target = CoreUser.find(params[:target_id]) rescue nil
+
+    params[:roles].each do |role|
+
+      CoreUserRole.create(
+        :user_id => @target.id,
+        :role => role
+      )
+    end
+
+    redirect_to "/user_list?user_id=#{@user.id}" and return
+  end
+
+  def void_role
+
+    @target = CoreUser.find(params[:target_id]) rescue nil
+
+    CoreUserRole.find_by_user_id_and_role(@target.id, params[:role]).delete rescue nil
+
+    redirect_to "/user_list?user_id=#{@user.id}" and return
+  end
+
+  def edit_user
+
+    if params[:user_id].nil?
+      flash[:error] = "Missing User ID!"
+      redirect_to request.referrer and return
+    end
+
+    @first_name = CoreUserProperty.find_by_property_and_user_id("First Name", params[:user_id]).property_value rescue nil
+
+    @last_name = CoreUserProperty.find_by_property_and_user_id("Last Name", params[:user_id]).property_value rescue nil
+
+    @gender = CoreUserProperty.find_by_property_and_user_id("Gender", params[:user_id]).property_value rescue nil
+
+  end
+
+  def update_user
+
+    fn_property = CoreUserProperty.find_by_property_and_user_id("First Name", params[:user_id]) rescue nil
+
+    if fn_property.nil?
+      CoreUserProperty.create(
+        :user_id => params[:user_id],
+        :property => "First Name",
+        :property_value => (params[:first_name] rescue nil)
+      )
+    else
+      fn_property.update_attributes(:property_value => params[:first_name])
+    end
+
+    ln_property = CoreUserProperty.find_by_property_and_user_id("Last Name", params[:user_id]) rescue nil
+
+    if ln_property.nil?
+      CoreUserProperty.create(
+        :user_id => params[:user_id],
+        :property => "Last Name",
+        :property_value => (params[:last_name] rescue nil)
+      )
+    else
+      ln_property.update_attributes(:property_value => params[:last_name])
+    end
+
+    gn_property = CoreUserProperty.find_by_property_and_user_id("Gender", params[:user_id]) rescue nil
+
+    if gn_property.nil?
+      CoreUserProperty.create(
+        :user_id => params[:user_id],
+        :property => "Gender",
+        :property_value => (params[:gender] rescue nil)
+      )
+    else
+      gn_property.update_attributes(:property_value => params[:gender])
+    end
+
+    flash[:notice] = "Demographics updated!"
+    redirect_to "/select_user_task?user_id=#{params[:user_id]}" and return
+  end
+
+  def edit_password
+
+    if params[:user_id].nil?
+      flash[:error] = "Missing User ID!"
+      redirect_to request.referrer and return
+    end
+
+  end
+
+  def update_password
+    old = CoreUser.authenticate(@user.username, params[:old_password]) # rescue nil
+
+    if old.nil?
+      flash[:error] = "Invalid current password!"
+
+      redirect_to request.referrer and return
+    end
+
+    user = CoreUser.find(params[:user_id]) #rescue nil
+
+    if !user.nil?
+      
+      user.update_attributes(:password => params[:password])
+      
+      flash[:notice] = "Password updated!"
+    end
+
+    redirect_to "/select_user_task?user_id=#{params[:user_id]}" and return
+  end
+
+  def logout
+    user = CoreUserProperty.find_by_user_id_and_property(params[:id], "Token") rescue nil
+
+    if user
+      user.delete
+      flash[:notice] = "You've been logged out"
+    end
+
+    redirect_to "/login" and return
+  end
+
+  def verify
+    demo = CoreUser.find(params[:user_id] || params[:id]).demographics rescue {}
+
+    render :text => demo.to_json
+  end
+
+  protected
+  
+  def check_user
+    
+    @user = CoreUser.find(params[:id] || params[:user_id]) rescue nil
+
+    if @user.nil?
+      redirect_to "/login" and return
+    end
+
+    if !@user.logged_in?
+      redirect_to "/login" and return
+    end
+
+  end
+
+end

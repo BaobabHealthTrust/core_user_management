@@ -1,0 +1,17 @@
+
+<script language="javascript">
+  tt_cancel_destination = '/user_list?user_id=<%= params[:user_id] %>';
+  tt_cancel_show = '/user_list?user_id=<%= params[:user_id] %>';
+</script>
+
+<form action="/update_user_status" method='post'>
+
+  <%= hidden_field_tag "user_id", "#{@user.id}" %>
+
+  <%= hidden_field_tag "target_id", "#{@target.id}" %>
+
+  <label for="status">Status</label>
+  <%= select_tag(:status, options_for_select([["Active", "ACTIVE"], ["Pending", "PENDING"], ["Blocked", "BLOCKED"]]),
+    :helpText => "Set user status #{(!@target.name.blank? ? "for " + @target.name : "" )}") %>
+
+</form>

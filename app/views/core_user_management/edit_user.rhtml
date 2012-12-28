@@ -1,0 +1,21 @@
+
+<script language="javascript">
+  tt_cancel_destination = '/select_user_task?user_id=<%= params[:user_id] %>';
+  tt_cancel_show = '/select_user_task?user_id=<%= params[:user_id] %>';
+</script>
+
+<form action="/update_user" method='post'>
+
+  <%= hidden_field_tag "user_id", "#{params[:user_id]}" %>
+
+  <label for="first_name">First name</label>
+  <%= text_field_tag(:first_name, @first_name, :helpText => "User First Name") %>
+
+  <label for="last_name">Last name</label>
+  <%= text_field_tag(:last_name, @last_name, :helpText => "User Last Name") %>
+
+  <label for="gender">Gender</label>
+  <%= select_tag(:gender, options_for_select([["Male", "Male"], ["Female", "Female"]], @gender),
+    :helpText => "Select User Gender") %>
+
+</form>
