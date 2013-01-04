@@ -1,7 +1,9 @@
 
 class CoreUserManagementController < ApplicationController
 
-  before_filter :check_user, :except => [:login, :authenticate, :logout, :verify]
+  before_filter :check_user, :except => [:login, :authenticate, :verify]
+
+  before_filter :check_location, :except => [:login, :authenticate, :logout, :verify, :location, :location_update]
 
   def login
 
@@ -12,7 +14,8 @@ class CoreUserManagementController < ApplicationController
 
       f = File.open(file, "w")
 
-      f.write("#{Rails.env}:\n    host.path.login: #{params[:src] rescue ""}#{request.referrer}")
+      f.write("#{Rails.env}:\n    host.path.login: #{params[:src] rescue ""}#{
+        (!request.referrer.match(/user\_id|location\_id/) ? request.referrer : "") }")
 
       f.close
 
@@ -32,6 +35,14 @@ class CoreUserManagementController < ApplicationController
   def authenticate
     user = CoreUser.authenticate(params[:login], params[:password]) rescue nil
 
+    if user.status_value.nil?
+      flash[:error] = "Unauthorised user!"
+      redirect_to request.referrer and return
+    elsif user.status_value.downcase != "active"
+      flash[:error] = "Unauthorised user!"
+      redirect_to request.referrer and return
+    end
+
     if user.nil?
       flash[:error] = "Wrong username or password!"
       redirect_to request.referrer and return
@@ -45,42 +56,8 @@ class CoreUserManagementController < ApplicationController
       :property_value => CoreUser.random_string(16)
     )
 
-    # Track final destination
-    file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
+    redirect_to "/location?user_id=#{user.id}" and return
 
-    @destination = nil
-
-    if File.exists?(file)
-
-      @destination = YAML.load_file(file)["#{Rails.env
-        }"]["host.path.login"].strip
-
-    end
-
-    if !@destination.nil?
-      q = (@destination.match(/\?/))
-      u = (@destination.match(/user_id=(\d+)/))
-
-      if u
-
-        @destination = @destination.gsub(/user_id=(\d+)/, "user_id=#{user.id}")
-        
-        redirect_to "http://#{@destination}" and return
-
-      else
-
-        # raise "http://#{@destination}#{(!q ? "?" : "")}user_id=#{user.id}".to_yaml
-
-        redirect_to "http://#{@destination}#{(!q ? "?" : "")}user_id=#{user.id}" and return
-
-      end
-
-    else
-
-      redirect_to "http://#{request.raw_host_with_port}?user_id=#{user.id}" and return
-
-    end
-    
   end
 
   def new_user
@@ -94,7 +71,8 @@ class CoreUserManagementController < ApplicationController
     if !existing.nil?
       flash[:error] = "Username already taken!"
       redirect_to "/new_user?user_id=#{@user.id}&first_name=#{params[:first_name]
-          }&last_name=#{params[:last_name]}&gender=#{params[:gender]}" and return
+          }&last_name=#{params[:last_name]}&gender=#{params[:gender]}#{
+      (!params[:src].nil? ? "&src=#{params[:src]}" : "")}" and return
     end
 
     user = CoreUser.create(
@@ -138,7 +116,8 @@ class CoreUserManagementController < ApplicationController
         
     end
 
-    redirect_to "/user_list?user_id=#{(params[:id] || params[:user_id])}" and return
+    redirect_to "/user_list?user_id=#{(params[:id] || params[:user_id])}&location_id=#{
+    params[:location_id]}#{(!params[:src].nil? ? "&src=#{params[:src]}" : "")}" and return
   end
 
   def select_user_task
@@ -168,6 +147,27 @@ class CoreUserManagementController < ApplicationController
   end
 
   def user_list
+
+    @destination = "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}"
+
+    if !params[:src].nil?
+      # Track final destination
+      file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
+
+      f = File.open(file, "w")
+
+      f.write("#{Rails.env}:\n    host.path.login: #{params[:src] rescue ""}?user_id=#{@user.id}")
+
+      f.close
+
+      if File.exists?(file)
+
+        @destination = "http://" + YAML.load_file(file)["#{Rails.env
+        }"]["host.path.login"].strip
+
+      end
+    end
+
     @users = CoreUser.find(:all).collect { |user|
       [
         user.name,
@@ -181,8 +181,6 @@ class CoreUserManagementController < ApplicationController
       ]
     }
 
-    @user = CoreUser.find((params[:user_id] || params[:id])) rescue nil
-    
     if @user.status_value.to_s.downcase != "pending" and @user.status_value.to_s.downcase != "blocked"
       
       @can_edit = true
@@ -223,7 +221,8 @@ class CoreUserManagementController < ApplicationController
     end
 
     flash[:notice] = "Status changed to #{params[:status].upcase}"
-    redirect_to "/user_list?user_id=#{@user.id}" and return
+    redirect_to "/user_list?user_id=#{@user.id}&location_id=#{
+    params[:location_id]}#{(!params[:src].nil? ? "&src=#{params[:src]}" : "")}" and return
   end
 
   def edit_roles
@@ -248,7 +247,8 @@ class CoreUserManagementController < ApplicationController
       )
     end
 
-    redirect_to "/user_list?user_id=#{@user.id}" and return
+    redirect_to "/user_list?user_id=#{@user.id}&location_id=#{
+    params[:location_id]}#{(!params[:src].nil? ? "&src=#{params[:src]}" : "")}" and return
   end
 
   def void_role
@@ -257,14 +257,30 @@ class CoreUserManagementController < ApplicationController
 
     CoreUserRole.find_by_user_id_and_role(@target.id, params[:role]).delete rescue nil
 
-    redirect_to "/user_list?user_id=#{@user.id}" and return
+    redirect_to "/user_list?user_id=#{@user.id}&location_id=#{params[:location_id]
+}#{(!params[:src].nil? ? "&src=#{params[:src]}" : "")}" and return
   end
 
   def edit_user
 
-    if params[:user_id].nil?
-      flash[:error] = "Missing User ID!"
-      redirect_to request.referrer and return
+    if !params[:src].nil?
+      # Track final destination
+      file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
+
+      f = File.open(file, "w")
+
+      f.write("#{Rails.env}:\n    host.path.login: #{params[:src] rescue ""}?user_id=#{@user.id}")
+
+      f.close
+
+      @destination = nil
+
+      if File.exists?(file)
+
+        @destination = YAML.load_file(file)["#{Rails.env
+        }"]["host.path.login"].strip
+
+      end
     end
 
     @first_name = CoreUserProperty.find_by_property_and_user_id("First Name", params[:user_id]).property_value rescue nil
@@ -313,15 +329,80 @@ class CoreUserManagementController < ApplicationController
       gn_property.update_attributes(:property_value => params[:gender])
     end
 
-    flash[:notice] = "Demographics updated!"
-    redirect_to "/select_user_task?user_id=#{params[:user_id]}" and return
+    if !params[:src].nil?
+      
+      file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
+
+      @destination = nil
+
+      if File.exists?(file)
+
+        @destination = YAML.load_file(file)["#{Rails.env
+        }"]["host.path.login"].strip
+
+      else
+
+        flash[:notice] = "Demographics updated!"
+
+        redirect_to "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}" and return
+
+      end
+      
+      if !@destination.nil?
+        q = (@destination.match(/\?/))
+        u = (@destination.match(/user_id=(\d+)/))
+
+        if u
+
+          @destination = @destination.gsub(/user_id=(\d+)/, "user_id=#{@user.id}&location_id=#{params[:location_id]}")
+
+          redirect_to "http://#{@destination}" and return
+
+        else
+
+          redirect_to "http://#{@destination}#{(!q ? "?" : "")}user_id=#{
+          @user.id}&location_id=#{params[:location_id]}" and return
+
+        end
+
+      else
+
+        flash[:notice] = "Demographics updated!"
+
+        redirect_to "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}" and return
+        
+      end
+
+    else
+
+      flash[:notice] = "Demographics updated!"
+
+      redirect_to "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}" and return
+
+    end
+
   end
 
   def edit_password
 
-    if params[:user_id].nil?
-      flash[:error] = "Missing User ID!"
-      redirect_to request.referrer and return
+    if !params[:src].nil?
+      # Track final destination
+      file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
+
+      f = File.open(file, "w")
+
+      f.write("#{Rails.env}:\n    host.path.login: #{params[:src] rescue ""}?user_id=#{@user.id}")
+
+      f.close
+
+      @destination = nil
+
+      if File.exists?(file)
+
+        @destination = YAML.load_file(file)["#{Rails.env
+        }"]["host.path.login"].strip
+
+      end
     end
 
   end
@@ -344,14 +425,75 @@ class CoreUserManagementController < ApplicationController
       flash[:notice] = "Password updated!"
     end
 
-    redirect_to "/select_user_task?user_id=#{params[:user_id]}" and return
+    # redirect_to "/select_user_task?user_id=#{params[:user_id]}" and return
+
+    if !params[:src].nil?
+
+      file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
+
+      @destination = nil
+
+      if File.exists?(file)
+
+        @destination = YAML.load_file(file)["#{Rails.env
+        }"]["host.path.login"].strip
+
+      else
+
+        flash[:notice] = "Password updated!"
+
+        redirect_to "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}" and return
+
+      end
+
+      if !@destination.nil?
+        q = (@destination.match(/\?/))
+        u = (@destination.match(/user_id=(\d+)/))
+
+        if u
+
+          @destination = @destination.gsub(/user_id=(\d+)/, "user_id=#{@user.id}&location_id=#{params[:location_id]}")
+
+          redirect_to "http://#{@destination}" and return
+
+        else
+
+          redirect_to "http://#{@destination}#{(!q ? "?" : "")}user_id=#{
+          @user.id}&location_id=#{params[:location_id]}" and return
+
+        end
+
+      else
+
+        flash[:notice] = "Password updated!"
+
+        redirect_to "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}" and return
+
+      end
+
+    else
+
+      flash[:notice] = "Password updated!"
+
+      redirect_to "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}" and return
+
+    end
   end
 
   def logout
     user = CoreUserProperty.find_by_user_id_and_property(params[:id], "Token") rescue nil
 
+    file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
+
+    if File.exists?(file)
+
+      File.delete(file)
+
+    end
+
     if user
-      user.delete
+      user.delete      
+
       flash[:notice] = "You've been logged out"
     end
 
@@ -362,6 +504,95 @@ class CoreUserManagementController < ApplicationController
     demo = CoreUser.find(params[:user_id] || params[:id]).demographics rescue {}
 
     render :text => demo.to_json
+  end
+
+  def location
+
+    if !params[:src].nil?
+      # Track final destination
+      file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
+
+      f = File.open(file, "w")
+
+      f.write("#{Rails.env}:\n    host.path.login: #{params[:src] rescue ""}?user_id=#{@user.id}")
+
+      f.close
+
+      @destination = nil
+
+      if File.exists?(file)
+
+        @destination = YAML.load_file(file)["#{Rails.env
+        }"]["host.path.login"].strip
+
+      end
+    end
+
+  end
+
+  def location_update
+
+    if params[:location].strip.match(/^\d+$/)
+
+      @location = CoreLocation.find(params[:location]) rescue nil
+
+    else
+      
+      @location = CoreLocation.find_by_name(params[:location]) rescue nil
+
+    end
+
+    if @location.nil?
+
+      flash[:error] = "Invalid location"
+      
+      redirect_to "/location?user_id=#{@user.id}" and return
+
+    end
+
+    if !params[:src].nil?
+      file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
+    else
+      file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
+    end
+
+    @destination = nil
+
+    if File.exists?(file)
+
+      @destination = YAML.load_file(file)["#{Rails.env
+        }"]["host.path.login"].strip
+
+    end
+
+    if !@destination.nil?
+      q = (@destination.match(/\?/))
+      u = (@destination.match(/user_id=(\d+)/))
+
+      if u
+
+        @destination = @destination.gsub(/user_id=(\d+)/, "user_id=#{@user.id}&location_id=#{@location.id}")
+
+        redirect_to "http://#{@destination}" and return
+
+      else
+
+        # raise "http://#{@destination}#{(!q ? "?" : "")}user_id=#{user.id}".to_yaml
+
+        redirect_to "http://#{@destination}#{(!q ? "?" : "")}user_id=#{@user.id}&location_id=#{@location.id}" and return
+
+      end
+
+    else
+
+      redirect_to "http://#{request.raw_host_with_port}?user_id=#{@user.id}&location_id=#{@location.id}" and return
+
+    end
+    
+  end
+
+  def user_demographics
+    render :layout => false
   end
 
   protected
@@ -376,6 +607,16 @@ class CoreUserManagementController < ApplicationController
 
     if !@user.logged_in?
       redirect_to "/login" and return
+    end
+
+  end
+
+  def check_location
+
+    @location = CoreLocation.find(params[:location_id]) rescue nil
+
+    if @location.nil?
+      redirect_to "/location?user_id=#{@user.id rescue nil}" and return
     end
 
   end

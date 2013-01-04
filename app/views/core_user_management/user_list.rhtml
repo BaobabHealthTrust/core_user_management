@@ -1,7 +1,9 @@
 
 <script language="javascript">
-  tt_cancel_destination = '/select_user_task?user_id=<%= (params[:user_id] || params[:id]) %>';
-  tt_cancel_show = '/select_user_task?user_id=<%= (params[:user_id] || params[:id]) %>';
+  tt_cancel_destination = '/select_user_task?user_id=<%= (params[:user_id] || 
+    params[:id]) %>&location_id=<%= params[:location_id] %>';
+  tt_cancel_show = '/select_user_task?user_id=<%= (params[:user_id] ||
+    params[:id]) %>&location_id=<%= params[:location_id] %>';
 
   function confirmDeletion(message, link) {
     if (!tstMessageBar) {
@@ -109,7 +111,9 @@
                                 <img src="/touchscreentoolkit/lib/images/cancel_flat_small_red.png" alt="edit"
                                      style="margin: 5px; border: 1px dotted #efe; padding: 10px;"
                                      onclick="confirmDeletion('Are you sure you want <br/>to delete this role?',
-                                       '/void_role?target_id=<%= user[5] %>&role=<%= role %>&user_id=<%= params[:user_id] %>')"/>
+                                             '/void_role?target_id=<%= user[5] %>&role=<%= role
+                                   %>&user_id=<%= params[:user_id] %>&location_id=<%=
+                                     params[:location_id] %><%= (!params[:src].nil? ? "&src=#{params[:src]}" : "") %>')"/>
 
                               <% else %>
                                 &nbsp;
@@ -130,7 +134,9 @@
                         <img src="/touchscreentoolkit/lib/images/pencil.png" alt="edit"
                              style="margin: 5px; border: 1px dotted #efe; padding: 10px;
                              padding-left: 15px; padding-right: 15px; cursor: pointer;"
-                             onclick="window.location='/edit_roles?target_id=<%= user[5] %>&user_id=<%= params[:user_id] %>'" />
+                             onclick="window.location='/edit_roles?target_id=<%= user[5]
+                           %>&user_id=<%= params[:user_id] %>&location_id=<%=
+                             params[:location_id] %><%= (!params[:src].nil? ? "&src=#{params[:src]}" : "") %>'" />
 
                       <% else %>
                         &nbsp;
@@ -168,7 +174,8 @@
 
                   <button class="btn"
                           onclick="window.location='/edit_user_status?target_id=<%= user[5] %>&user_id=<%=
-                          @user.id %>'">
+                          @user.id %>&location_id=<%= params[:location_id] %><%=
+                          (!params[:src].nil? ? "&src=#{params[:src]}" : "") %>'">
                     Status
                   </button>
 
@@ -210,13 +217,14 @@
           </tr>
         </table>
         <button class="green" style="float: right; margin: 8px; width: 150px; margin-right: 20px;"
-                onclick="window.location='/select_user_task?user_id=<%= params[:user_id] %>'">
+                onclick="window.location='<%= @destination %>'">
           <span>
             Finish
           </span>
         </button>
         <button class="blue" style="float: right; margin: 8px; width: 150px; margin-right: 20px;"
-                onclick="window.location='/new_user?user_id=<%= params[:user_id] %>'">
+                onclick="window.location='/new_user?user_id=<%= params[:user_id] 
+              %>&location_id=<%= params[:location_id] %><%= (!params[:src].nil? ? "&src=#{params[:src]}" : "") %>'">
           <span>
             Add User
           </span>

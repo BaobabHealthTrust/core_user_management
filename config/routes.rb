@@ -36,6 +36,12 @@ ActionController::Routing::Routes.draw do |map|
 
   map.verify  '/verify/:id',  :controller => 'core_user_management', :action => 'verify'
 
+  map.location  '/location',  :controller => 'core_user_management', :action => 'location'
+
+  map.location_update  '/location_update',  :controller => 'core_user_management', :action => 'location_update'
+
+  map.user_demographics  '/user_demographics',  :controller => 'core_user_management', :action => 'user_demographics'
+
   # The priority is based upon order of creation: first created -> highest priority.
 
   # Sample of regular route:

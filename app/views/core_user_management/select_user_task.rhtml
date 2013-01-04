@@ -33,13 +33,15 @@
                     Roles:
                   </td>
                   <td style="vertical-align: top; font-size: 1.8em; border-left: 1px dotted #ccc;" align="left">
-                    <ul>
-                      <% @user.user_roles.each do |role| %>
-                        <li style="padding-left: 20px;">
-                          <%= role.role %>
-                        </li>
-                      <% end %>
-                    </ul>
+                    <div style="height: 470px; width: 620px; overflow: auto;">
+                      <ul>
+                        <% @user.user_roles.each do |role| %>
+                          <li style="padding-left: 20px;">
+                            <%= role.role %>
+                          </li>
+                        <% end %>
+                      </ul>
+                    </div>
                   </td>
                 </tr>
               </table>
@@ -54,7 +56,8 @@
                 <tr>
                   <td>
                     <button class="blue" style="margin: 8px; width: 250px; float: right;"
-                            onclick="window.location='/edit_user?user_id=<%= @user.id %>'">
+                            onclick="window.location='/edit_user?user_id=<%= @user.id
+                          %>&location_id=<%= params[:location_id] %>'">
                       <span>
                         Edit Demographics
                       </span>
@@ -64,7 +67,8 @@
                 <tr>
                   <td>
                     <button class="blue" style="margin: 8px; width: 250px; float: right;"
-                            onclick="window.location='/edit_password?user_id=<%= @user.id %>'">
+                            onclick="window.location='/edit_password?user_id=<%= 
+                            @user.id %>&location_id=<%= params[:location_id] %>'">
                       <span>
                         Change Password
                       </span>
@@ -73,11 +77,12 @@
                 </tr>
 
                 <% if @user.admin? || @user.manager? %>
-                
+
                   <tr>
                     <td>
                       <button class="blue" style="margin: 8px; width: 250px; float: right;"
-                              onclick="window.location='/user_list?user_id=<%= @user.id %>'">
+                              onclick="window.location='/user_list?user_id=<%=
+                              @user.id %>&location_id=<%= params[:location_id] %>'">
                         <span>
                           Manage Users
                         </span>
