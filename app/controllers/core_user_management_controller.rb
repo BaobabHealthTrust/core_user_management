@@ -35,10 +35,12 @@ class CoreUserManagementController < ApplicationController
   def authenticate
     user = CoreUser.authenticate(params[:login], params[:password]) rescue nil
 
-    if user.status_value.nil?
+    file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
+
+    if user.status_value.nil? and File.exists?(file)
       flash[:error] = "Unauthorised user!"
       redirect_to request.referrer and return
-    elsif user.status_value.downcase != "active"
+    elsif (user.status_value.downcase != "active" rescue false) and File.exists?(file)
       flash[:error] = "Unauthorised user!"
       redirect_to request.referrer and return
     end
