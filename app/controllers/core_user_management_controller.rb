@@ -37,7 +37,7 @@ class CoreUserManagementController < ApplicationController
 
     file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
 
-    if user.status_value.nil? and File.exists?(file)
+    if (user.status_value.nil? rescue false) and File.exists?(file)
       flash[:error] = "Unauthorised user!"
       redirect_to request.referrer and return
     elsif (user.status_value.downcase != "active" rescue false) and File.exists?(file)
