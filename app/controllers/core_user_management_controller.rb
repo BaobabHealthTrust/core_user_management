@@ -28,6 +28,8 @@ class CoreUserManagementController < ApplicationController
       @destination = YAML.load_file(file)["#{Rails.env
         }"]["host.path.login"].strip
 
+      # File.delete(file)
+
     end
 
   end
@@ -143,6 +145,8 @@ class CoreUserManagementController < ApplicationController
 
       @destination = YAML.load_file(file)["#{Rails.env
         }"]["host.path.login"].strip
+
+      File.delete(file)
 
     end
 
@@ -282,6 +286,8 @@ class CoreUserManagementController < ApplicationController
         @destination = YAML.load_file(file)["#{Rails.env
         }"]["host.path.login"].strip
 
+        File.delete(file)
+
       end
     end
 
@@ -341,6 +347,8 @@ class CoreUserManagementController < ApplicationController
 
         @destination = YAML.load_file(file)["#{Rails.env
         }"]["host.path.login"].strip
+
+        File.delete(file)
 
       else
 
@@ -404,6 +412,8 @@ class CoreUserManagementController < ApplicationController
         @destination = YAML.load_file(file)["#{Rails.env
         }"]["host.path.login"].strip
 
+        File.delete(file)
+
       end
     end
 
@@ -439,6 +449,8 @@ class CoreUserManagementController < ApplicationController
 
         @destination = YAML.load_file(file)["#{Rails.env
         }"]["host.path.login"].strip
+
+        File.delete(file)
 
       else
 
@@ -527,6 +539,8 @@ class CoreUserManagementController < ApplicationController
         @destination = YAML.load_file(file)["#{Rails.env
         }"]["host.path.login"].strip
 
+        File.delete(file)
+
       end
     end
 
@@ -564,6 +578,8 @@ class CoreUserManagementController < ApplicationController
 
       @destination = YAML.load_file(file)["#{Rails.env
         }"]["host.path.login"].strip
+
+      File.delete(file)
 
     end
 
