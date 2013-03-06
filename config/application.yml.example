@@ -1,0 +1,10 @@
+## YAML Template.
+---
+production:
+  user.management.url: http://localhost:3004
+
+development:
+  user.management.url: http://localhost:3004
+
+test: &TEST
+  user.management.url: http://localhost:3004
