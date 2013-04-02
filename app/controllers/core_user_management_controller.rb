@@ -6,9 +6,11 @@ class CoreUserManagementController < ApplicationController
   before_filter :check_location, :except => [:login, :authenticate, :logout, :verify, :location, :location_update]
 
   def login
-
-    # Track final destination
-    file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
+    if params[:location]
+    file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user#{params[:location]}.login.yml"
+    else
+    file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml" 
+    end
 
     if !params[:ext].nil?
 
@@ -495,14 +497,18 @@ class CoreUserManagementController < ApplicationController
   end
 
   def logout
+    
+    request_link = params[:ext]? request.referrer.split("?").first  : ""
+ 
     user = CoreUserProperty.find_by_user_id_and_property(params[:id], "Token") rescue nil
 
     file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
 
     if File.exists?(file)
 
+      @destination = YAML.load_file(file)["#{Rails.env
+        }"]["host.path.login"].strip
       File.delete(file)
-
     end
 
     if user
@@ -510,7 +516,9 @@ class CoreUserManagementController < ApplicationController
 
       flash[:notice] = "You've been logged out"
     end
-
+    
+    redirect_to "#{request_link}" and return if params[:ext]
+    
     redirect_to "/login" and return
   end
 
