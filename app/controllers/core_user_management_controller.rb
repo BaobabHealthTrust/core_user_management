@@ -498,14 +498,18 @@ class CoreUserManagementController < ApplicationController
   end
 
   def logout
+  
+    request_link = params[:ext]? request.referrer.split("?").first  : ""
+ 
     user = CoreUserProperty.find_by_user_id_and_property(params[:id], "Token") rescue nil
 
     file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
 
     if File.exists?(file)
 
+      @destination = YAML.load_file(file)["#{Rails.env
+        }"]["host.path.login"].strip
       File.delete(file)
-
     end
 
     if user
@@ -513,8 +517,11 @@ class CoreUserManagementController < ApplicationController
 
       flash[:notice] = "You've been logged out"
     end
-
-    redirect_to "/login" and return
+    
+    redirect_to "#{request_link}" and return if params[:ext]
+    
+    redirect_to "/login" and return    
+    
   end
 
   def verify
