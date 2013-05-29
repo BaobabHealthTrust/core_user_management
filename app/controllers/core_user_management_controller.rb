@@ -1,7 +1,7 @@
 
 class CoreUserManagementController < ApplicationController
 
-  before_filter :check_user, :except => [:login, :authenticate, :verify]
+  before_filter :check_user, :except => [:login, :logout, :authenticate, :verify]
 
   before_filter :check_location, :except => [:login, :authenticate, :logout, :verify, :location, :location_update]
 
@@ -503,7 +503,7 @@ class CoreUserManagementController < ApplicationController
  
     user = CoreUserProperty.find_by_user_id_and_property(params[:id], "Token") rescue nil
 
-    file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
+    file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml" rescue ""
 
     if File.exists?(file)
 
