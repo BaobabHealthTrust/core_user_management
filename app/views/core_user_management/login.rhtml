@@ -6,15 +6,17 @@
 
 <form id='sessions' action="/authenticate" method='post'>
 
-    <label for="login">Username</label>
-    <%= text_field_tag(:login, nil, :helpText => "Enter user name",
-        :textCase => "lower", :field_type => "password",
-        :tt_onLoad => "inform(); barcodeId = 'touchscreenInput0';") %><br>
+  <label for="login">Username</label>
+  <%= text_field_tag(:login, nil, :helpText => "Enter user name",
+    :textCase => "lower", :field_type => "password",
+    :tt_onLoad => "inform(); barcodeId = 'touchscreenInput0';") %><br>
 
-    <label for="password">Password</label>
-    <%= password_field_tag(:password, nil, :helpText => "Enter password",
-        :textCase => "lower", :field_type => "password",
-        :tt_onLoad => "inform(); barcodeId = 'touchscreenInput1';") %><br>
+  <label for="password">Password</label>
+  <%= password_field_tag(:password, nil, :helpText => "Enter password",
+    :textCase => "lower", :field_type => "password",
+    :tt_onLoad => "inform(); barcodeId = 'touchscreenInput1';") %><br>
 
-    <%= submit_tag value="Submit"%>
+  <%= hidden_field_tag "src", "#{params[:src]}" %>
+
+  <%= submit_tag value="Submit"%>
 </form>

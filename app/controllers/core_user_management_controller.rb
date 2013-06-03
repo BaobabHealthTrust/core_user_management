@@ -63,7 +63,7 @@ class CoreUserManagementController < ApplicationController
       :property_value => CoreUser.random_string(16)
     )
 
-    redirect_to "/location?user_id=#{user.id}" and return
+    redirect_to "/location?user_id=#{user.id}&src=#{params[:src]}" and return
 
   end
 
@@ -272,7 +272,7 @@ class CoreUserManagementController < ApplicationController
 
   def edit_user
 
-    if !params[:src].nil?
+    if !params[:src].blank?
       # Track final destination
       file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
 
@@ -292,6 +292,7 @@ class CoreUserManagementController < ApplicationController
         File.delete(file)
 
       end
+      
     end
 
     @first_name = CoreUserProperty.find_by_property_and_user_id("First Name", params[:user_id]).property_value rescue nil
@@ -340,7 +341,7 @@ class CoreUserManagementController < ApplicationController
       gn_property.update_attributes(:property_value => params[:gender])
     end
 
-    if !params[:src].nil?
+    if !params[:src].blank?
       
       file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
 
@@ -357,11 +358,13 @@ class CoreUserManagementController < ApplicationController
 
         flash[:notice] = "Demographics updated!"
 
-        redirect_to "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}" and return
+        redirect_to "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}" and return unless !params[:src].blank?
 
       end
-      
-      if !@destination.nil?
+
+      @destination = params[:src] if @destination.blank? && !params[:src].blank?
+     
+      if !@destination.blank?
         q = (@destination.match(/\?/))
         u = (@destination.match(/user_id=(\d+)/))
 
@@ -390,7 +393,7 @@ class CoreUserManagementController < ApplicationController
 
       flash[:notice] = "Demographics updated!"
 
-      redirect_to "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}" and return
+      redirect_to "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}" and return 
 
     end
 
@@ -425,7 +428,7 @@ class CoreUserManagementController < ApplicationController
   def update_password
     old = CoreUser.authenticate(@user.username, params[:old_password]) # rescue nil
 
-    if old.nil?
+    if old.blank?
       flash[:error] = "Invalid current password!"
 
       redirect_to request.referrer and return
@@ -442,7 +445,7 @@ class CoreUserManagementController < ApplicationController
 
     # redirect_to "/select_user_task?user_id=#{params[:user_id]}" and return
 
-    if !params[:src].nil?
+    if !params[:src].blank?
 
       file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
 
@@ -458,10 +461,12 @@ class CoreUserManagementController < ApplicationController
       else
 
         flash[:notice] = "Password updated!"
-
-        redirect_to "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}" and return
+        
+        redirect_to "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}" and return unless !params[:src].blank?
 
       end
+      
+      @destination = params[:src] if @destination.blank? && !params[:src].blank?
 
       if !@destination.nil?
         q = (@destination.match(/\?/))
@@ -532,7 +537,7 @@ class CoreUserManagementController < ApplicationController
   end
 
   def location
-
+   
     if !params[:src].nil?
       # Track final destination
       file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{@user.id}.yml"
@@ -553,6 +558,7 @@ class CoreUserManagementController < ApplicationController
         File.delete(file)
 
       end
+  
     end
 
   end
@@ -573,7 +579,7 @@ class CoreUserManagementController < ApplicationController
 
       flash[:error] = "Invalid location"
       
-      redirect_to "/location?user_id=#{@user.id}" and return
+      redirect_to "/location?user_id=#{@user.id}&src=#{params[:src]}" and return
 
     end
 
@@ -594,6 +600,8 @@ class CoreUserManagementController < ApplicationController
 
     end
 
+    @destination = params[:src] if @destination.blank? && !params[:src].blank?
+    
     if !@destination.nil?
       q = (@destination.match(/\?/))
       u = (@destination.match(/user_id=(\d+)/))
