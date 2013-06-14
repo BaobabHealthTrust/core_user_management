@@ -1,5 +1,6 @@
 
 class CoreUserManagementController < ApplicationController
+  unloadable
 
   before_filter :__check_user, :except => [:login, :logout, :authenticate, :verify]
 
@@ -66,7 +67,7 @@ class CoreUserManagementController < ApplicationController
     session[:token] = u.property_value
     session[:user_id] = u.user_id
 
-    redirect_to "/location?user_id=#{user.id}&src=#{params[:src]}" and return
+    redirect_to "/location?user_id=#{user.id}&src=#{params[:src]}&token=#{session[:token]}" and return
 
   end
 
@@ -585,7 +586,7 @@ class CoreUserManagementController < ApplicationController
 
       flash[:error] = "Invalid location"
       
-      redirect_to "/location?user_id=#{session[:user_id]}&src=#{params[:src]}" and return
+      redirect_to "/location?user_id=#{session[:user_id]}&src=#{params[:src]}&token=#{session[:token]}" and return
 
     end
 
@@ -616,7 +617,7 @@ class CoreUserManagementController < ApplicationController
 
       if u
 
-        @destination = @destination.gsub(/user_id=(\d+)/, "user_id=#{session[:user_id]}&location_id=#{@location.id}")
+        @destination = @destination.gsub(/user_id=(\d+)/, "user_id=#{session[:user_id]}&location_id=#{@location.id}&token=#{session[:token]}")
 
         redirect_to "http://#{@destination}" and return
 
@@ -624,7 +625,7 @@ class CoreUserManagementController < ApplicationController
 
         # raise "http://#{@destination}#{(!q ? "?" : "")}user_id=#{user.id}".to_yaml
 
-        redirect_to "http://#{@destination}#{(!q ? "?" : "")}user_id=#{session[:user_id]}&location_id=#{@location.id}" and return
+        redirect_to "http://#{@destination}#{(!q ? "?" : "")}user_id=#{session[:user_id]}&location_id=#{@location.id}&token=#{session[:token]}" and return
 
       end
 
