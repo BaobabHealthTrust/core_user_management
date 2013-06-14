@@ -1,6 +1,8 @@
 
 class ApplicationController < ActionController::Base
   helper :all
+  
+  before_filter :start_session
 
   def get_global_property_value(global_property)
 		property_value = Settings[global_property]
@@ -22,6 +24,12 @@ class ApplicationController < ActionController::Base
     @show_next_button = show_next_button
     @patient_id = patient_id
     render :template => 'print/print', :layout => nil
+  end
+
+protected
+
+  def start_session
+    session[:started] = true
   end
 
 end
