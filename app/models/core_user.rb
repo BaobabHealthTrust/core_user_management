@@ -34,8 +34,10 @@ class CoreUser < ActiveRecord::Base
     self.password = encrypt(self.password, self.salt) #if self.plain_password
   end
    
-  def self.authenticate(login, password)
+  def self.authenticate(login, password) 
+     
     u = find :first, :conditions => {:username => login} 
+    
     u && u.authenticated?(password) ? u : nil
     #raise password
   end

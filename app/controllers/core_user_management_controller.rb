@@ -39,20 +39,28 @@ class CoreUserManagementController < ApplicationController
 
   def authenticate
 
-    user = CoreUser.authenticate(params[:login], params[:password]) rescue nil
+    user = CoreUser.authenticate(params[:login], params[:password]) # rescue nil
+
+    if user.nil?
+      flash[:error] = "Wrong username or password!"
+      redirect_to request.referrer and return
+    end
 
     file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
+
+    CoreUserProperty.find_by_user_id_and_property(user.id, "Status").delete rescue nil
+
+    u = CoreUserProperty.create(
+      :user_id => user.id,
+      :property => "Status",
+      :property_value => "ACTIVE"
+    )
 
     if (user.status_value.nil? rescue false) and File.exists?(file)
       flash[:error] = "Unauthorised user!"
       redirect_to request.referrer and return
     elsif (user.status_value.downcase != "active" rescue false) and File.exists?(file)
       flash[:error] = "Unauthorised user!"
-      redirect_to request.referrer and return
-    end
-
-    if user.nil?
-      flash[:error] = "Wrong username or password!"
       redirect_to request.referrer and return
     end
 
