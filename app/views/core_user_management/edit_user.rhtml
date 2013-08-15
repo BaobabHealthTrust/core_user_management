@@ -21,13 +21,14 @@
   <%= hidden_field_tag "location_id", "#{params[:location_id]}" %>
 
   <label for="first_name">First name</label>
-  <%= text_field_tag(:first_name, @first_name, :helpText => "User First Name") %>
+  <%= text_field_tag(:first_name, @first_name, :helpText => "#{Vocabulary.search("First Name")}") %>
 
   <label for="last_name">Last name</label>
-  <%= text_field_tag(:last_name, @last_name, :helpText => "User Last Name") %>
+  <%= text_field_tag(:last_name, @last_name, :helpText => "#{Vocabulary.search("Last Name")}") %>
 
   <label for="gender">Gender</label>
-  <%= select_tag(:gender, options_for_select([["Male", "Male"], ["Female", "Female"]], @gender),
-    :helpText => "Select User Gender") %>
+  <%= select_tag(:gender, options_for_select([["#{Vocabulary.search("Male")}", "Male"], 
+      ["#{Vocabulary.search("Female")}", "Female"]], @gender),
+    :helpText => "#{Vocabulary.search("Gender")}") %>
 
 </form>

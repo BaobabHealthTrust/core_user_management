@@ -80,7 +80,7 @@ class CoreUserManagementController < ApplicationController
   end
 
   def new_user
-    @roles = CoreRole.find(:all).collect{|r|r.role}
+    @roles = CoreRole.find(:all).collect{|r| Vocabulary.search(r.role)}
   end
 
   def create_user
@@ -250,9 +250,9 @@ class CoreUserManagementController < ApplicationController
 
     @target = CoreUser.find(params[:target_id]) rescue nil
     
-    current_roles = @target.user_roles.collect{|r| r.role}
+    current_roles = @target.user_roles.collect{|r| Vocabulary.search(r.role)}
 
-    @roles = CoreRole.find(:all).collect{|r|r.role} - current_roles
+    @roles = CoreRole.find(:all).collect{|r| Vocabulary.search(r.role)} - current_roles
     
   end
 

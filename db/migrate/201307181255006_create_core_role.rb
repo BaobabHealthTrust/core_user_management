@@ -4,6 +4,7 @@ class CreateCoreRole < ActiveRecord::Migration
       create_table "role", :id => false, :force => true do |t|
         t.string "role", :limit => 250
         t.string "description",               :default => "", :null => false
+        t.integer "vocabulary_id"
         t.string "uuid",        :limit => 38,                 :null => false
       end
 
