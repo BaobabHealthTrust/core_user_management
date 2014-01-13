@@ -45,7 +45,9 @@ class CoreUserManagementController < ApplicationController
       flash[:error] = "Wrong username or password!"
       redirect_to request.referrer and return
     end
-
+    
+    #Figure out directions
+    Dir::mkdir("#{RAILS_ROOT}/tmp") rescue nil
     file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
 
     CoreUserProperty.find_by_user_id_and_property(user.id, "Status").delete rescue nil
