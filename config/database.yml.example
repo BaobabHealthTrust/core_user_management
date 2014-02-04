@@ -46,3 +46,11 @@ production:
   username: root
   password: admin
   socket: /var/run/mysqld/mysqld.sock
+
+parallel:
+  adapter: mysql
+  encoding: utf8
+  database: your_other_users_database
+  username: username
+  password: password
+  host: host_ip
