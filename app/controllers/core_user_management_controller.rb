@@ -11,7 +11,7 @@ class CoreUserManagementController < ApplicationController
     # Track final destination
     file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
 
-    if !params[:ext].nil?
+    if !params[:ext].blank?
 
       f = File.open(file, "w")
 
@@ -100,7 +100,9 @@ class CoreUserManagementController < ApplicationController
       flash[:error] = "Wrong username or password!"
       redirect_to request.referrer and return
     end
-
+    
+    #Figure out directions
+    Dir::mkdir("#{RAILS_ROOT}/tmp") rescue nil
     file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
 
     CoreUserProperty.find_by_user_id_and_property(user.id, "Status").delete rescue nil
@@ -111,7 +113,7 @@ class CoreUserManagementController < ApplicationController
       :property_value => "ACTIVE"
     )
 
-    if (user.status_value.nil? rescue false) and File.exists?(file)
+    if (user.status_value.blank? rescue false) and File.exists?(file)
       flash[:error] = "Unauthorised user!"
       redirect_to request.referrer and return
     elsif (user.status_value.downcase != "active" rescue false) and File.exists?(file)
@@ -135,18 +137,18 @@ class CoreUserManagementController < ApplicationController
   end
 
   def new_user
-    @roles = CoreRole.find(:all).collect{|r|r.role}
+    @roles = CoreRole.find(:all).collect{|r| Vocabulary.search(r.role)}
   end
 
   def create_user
 
     existing = CoreUser.find_by_username(params[:login]) rescue nil
 
-    if !existing.nil?
+    if !existing.blank?
       flash[:error] = "Username already taken!"
       redirect_to "/new_user?user_id=#{session[:user_id]}&first_name=#{params[:first_name]
           }&last_name=#{params[:last_name]}&gender=#{params[:gender]}#{
-      (!params[:src].nil? ? "&src=#{params[:src]}" : "")}" and return
+      (!params[:src].blank? ? "&src=#{params[:src]}" : "")}" and return
     end
 
     user = CoreUser.create(
@@ -191,7 +193,7 @@ class CoreUserManagementController < ApplicationController
     end
 
     redirect_to "/user_list?user_id=#{(params[:id] || params[:user_id])}&location_id=#{
-    params[:location_id]}#{(!params[:src].nil? ? "&src=#{params[:src]}" : "")}" and return
+    params[:location_id]}#{(!params[:src].blank? ? "&src=#{params[:src]}" : "")}" and return
   end
 
   def select_user_task
@@ -199,7 +201,7 @@ class CoreUserManagementController < ApplicationController
     # Track final destination
     file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
 
-    if !params[:ext].nil?
+    if !params[:ext].blank?
 
       f = File.open(file, "w")
 
@@ -226,7 +228,7 @@ class CoreUserManagementController < ApplicationController
 
     @destination = "/select_user_task?user_id=#{params[:user_id]}&location_id=#{params[:location_id]}"
 
-    if !params[:src].nil?
+    if !params[:src].blank?
       # Track final destination
       file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{session[:user_id]}.yml"
 
@@ -267,13 +269,13 @@ class CoreUserManagementController < ApplicationController
 
     end
 
-    redirect_to "/login" and return if @user.nil?
+    redirect_to "/login" and return if @user.blank?
 
   end
 
   def edit_user_status
 
-    if params[:target_id].nil?
+    if params[:target_id].blank?
       flash[:error] = "Missing User ID!"
       redirect_to request.referrer and return
     end
@@ -286,7 +288,7 @@ class CoreUserManagementController < ApplicationController
 
     property = CoreUserProperty.find_by_property_and_user_id("Status", params[:target_id]) rescue nil
 
-    if property.nil?
+    if property.blank?
       CoreUserProperty.create(
         :user_id => params[:target_id],
         :property => "Status",
@@ -298,16 +300,16 @@ class CoreUserManagementController < ApplicationController
 
     flash[:notice] = "Status changed to #{params[:status].upcase}"
     redirect_to "/user_list?user_id=#{session[:user_id]}&location_id=#{
-    params[:location_id]}#{(!params[:src].nil? ? "&src=#{params[:src]}" : "")}" and return
+    params[:location_id]}#{(!params[:src].blank? ? "&src=#{params[:src]}" : "")}" and return
   end
 
   def edit_roles
 
     @target = CoreUser.find(params[:target_id]) rescue nil
     
-    current_roles = @target.user_roles.collect{|r| r.role}
+    current_roles = @target.user_roles.collect{|r| Vocabulary.search(r.role)}
 
-    @roles = CoreRole.find(:all).collect{|r|r.role} - current_roles
+    @roles = CoreRole.find(:all).collect{|r| Vocabulary.search(r.role)} - current_roles
     
   end
 
@@ -324,7 +326,7 @@ class CoreUserManagementController < ApplicationController
     end
 
     redirect_to "/user_list?user_id=#{session[:user_id]}&location_id=#{
-    params[:location_id]}#{(!params[:src].nil? ? "&src=#{params[:src]}" : "")}" and return
+    params[:location_id]}#{(!params[:src].blank? ? "&src=#{params[:src]}" : "")}" and return
   end
 
   def void_role
@@ -334,7 +336,7 @@ class CoreUserManagementController < ApplicationController
     CoreUserRole.find_by_user_id_and_role(@target.id, params[:role]).delete rescue nil
 
     redirect_to "/user_list?user_id=#{session[:user_id]}&location_id=#{params[:location_id]
-}#{(!params[:src].nil? ? "&src=#{params[:src]}" : "")}" and return
+}#{(!params[:src].blank? ? "&src=#{params[:src]}" : "")}" and return
   end
 
   def edit_user
@@ -374,7 +376,7 @@ class CoreUserManagementController < ApplicationController
 
     fn_property = CoreUserProperty.find_by_property_and_user_id("First Name", params[:user_id]) rescue nil
 
-    if fn_property.nil?
+    if fn_property.blank?
       CoreUserProperty.create(
         :user_id => params[:user_id],
         :property => "First Name",
@@ -386,7 +388,7 @@ class CoreUserManagementController < ApplicationController
 
     ln_property = CoreUserProperty.find_by_property_and_user_id("Last Name", params[:user_id]) rescue nil
 
-    if ln_property.nil?
+    if ln_property.blank?
       CoreUserProperty.create(
         :user_id => params[:user_id],
         :property => "Last Name",
@@ -398,7 +400,7 @@ class CoreUserManagementController < ApplicationController
 
     gn_property = CoreUserProperty.find_by_property_and_user_id("Gender", params[:user_id]) rescue nil
 
-    if gn_property.nil?
+    if gn_property.blank?
       CoreUserProperty.create(
         :user_id => params[:user_id],
         :property => "Gender",
@@ -468,7 +470,7 @@ class CoreUserManagementController < ApplicationController
 
   def edit_password
 
-    if !params[:src].nil?
+    if !params[:src].blank?
       # Track final destination
       file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{session[:user_id]}.yml"
 
@@ -503,7 +505,7 @@ class CoreUserManagementController < ApplicationController
 
     user = CoreUser.find(params[:user_id]) #rescue nil
 
-    if !user.nil?
+    if !user.blank?
       
       user.update_attributes(:password => params[:password])
       
@@ -535,7 +537,7 @@ class CoreUserManagementController < ApplicationController
       
       @destination = params[:src] if @destination.blank? && !params[:src].blank?
 
-      if !@destination.nil?
+      if !@destination.blank?
         q = (@destination.match(/\?/))
         u = (@destination.match(/user_id=(\d+)/))
 
@@ -645,7 +647,7 @@ class CoreUserManagementController < ApplicationController
 
     end
 
-    if @location.nil?
+    if @location.blank?
 
       flash[:error] = "Invalid location"
       
@@ -655,7 +657,7 @@ class CoreUserManagementController < ApplicationController
 
     session[:location_id] = @location.id
 
-    if !params[:src].nil?
+    if !params[:src].blank?
       file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.#{session[:user_id]}.yml"
     else
       file = "#{File.expand_path("#{Rails.root}/tmp", __FILE__)}/user.login.yml"
@@ -674,7 +676,7 @@ class CoreUserManagementController < ApplicationController
 
     @destination = params[:src] if @destination.blank? && !params[:src].blank?
     
-    if !@destination.nil?
+    if !@destination.blank?
       q = (@destination.match(/\?/))
       u = (@destination.match(/user_id=(\d+)/))
 
@@ -710,12 +712,12 @@ class CoreUserManagementController < ApplicationController
     
     token = session[:token] rescue nil
     
-    if token.nil?
+    if token.blank?
       redirect_to "/login" and return
     else
       @user = CoreUser.find(session[:user_id]) rescue nil
       
-      if @user.nil?
+      if @user.blank?
         redirect_to "/login" and return
       end
     end
@@ -726,8 +728,8 @@ class CoreUserManagementController < ApplicationController
     
     location = session[:location_id] rescue nil
     
-    if location.nil?
-      redirect_to "/location?user_id=#{session[:user_id]}" and return if !session[:user_id].nil?
+    if location.blank?
+      redirect_to "/location?user_id=#{session[:user_id]}" and return if !session[:user_id].blank?
     end
     
   end

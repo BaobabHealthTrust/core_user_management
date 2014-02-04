@@ -33,7 +33,7 @@ function inform() {
 <form id='location' action="/location_update" method='post'>
   <label for="location">Location</label>
   <%= text_field_tag(:location, nil,
-    :helpText => "Workstation location",
+    :helpText => "#{Vocabulary.search("Workstation location")}",
     :tt_onLoad => "__$('keyboard').style.display='none'"
   ) %>
   <%= hidden_field_tag "user_id", "#{params[:user_id]}" %>

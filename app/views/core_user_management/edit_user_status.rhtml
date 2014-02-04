@@ -21,7 +21,8 @@ params[:location_id] + (!params[:src].nil? ? "&src=#{params[:src]}" : "") %>';
   <% end %>
 
   <label for="status">Status</label>
-  <%= select_tag(:status, options_for_select([["Active", "ACTIVE"], ["Pending", "PENDING"], ["Blocked", "BLOCKED"]]),
-    :helpText => "Set user status #{(!@target.name.blank? ? "for " + @target.name : "" )}") %>
+  <%= select_tag(:status, options_for_select([["#{Vocabulary.search("Active")}", "ACTIVE"], 
+      ["#{Vocabulary.search("Pending")}", "PENDING"], ["#{Vocabulary.search("Blocked")}", "BLOCKED"]]),
+    :helpText => "#{Vocabulary.search("Set status for")} #{(!@target.name.blank? ? @target.name : "" )}") %>
 
 </form>

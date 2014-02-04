@@ -2,9 +2,11 @@
 ---
 production:
   user.management.url: http://localhost:3004
+  locale: en
 
 development:
   user.management.url: http://localhost:3004
+  locale: en
 
 test: &TEST
   user.management.url: http://localhost:3004

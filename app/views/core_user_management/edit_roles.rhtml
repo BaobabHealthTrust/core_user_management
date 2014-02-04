@@ -16,7 +16,7 @@
   <label for="roles">Roles</label>
   <%= select_tag("roles[]", options_for_select(@roles),
     :id => "roles",
-    :helpText => "Select User Roles #{(!@target.name.blank? ? "for " + @target.name : "" )}",
+    :helpText => "#{Vocabulary.search("Add User Roles for")} #{(!@target.name.blank? ? @target.name : "" )}",
     :multiple => "multiple",
     :tt_pageStyleClass => "long"
   ) %>
