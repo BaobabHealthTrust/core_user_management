@@ -47,6 +47,10 @@ production:
   password: admin
   socket: /var/run/mysqld/mysqld.sock
 
+#Use the parameters below if you also have a separate database where
+#user information is located
+
+
 parallel:
   adapter: mysql
   encoding: utf8
