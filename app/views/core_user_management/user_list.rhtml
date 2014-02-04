@@ -112,7 +112,7 @@
                                      style="margin: 5px; border: 1px dotted #efe; padding: 10px;"
                                      onclick="confirmDeletion('Are you sure you want <br/>to delete this role?',
                                              '/void_role?target_id=<%= user[5] %>&role=<%= role
-                                   %>&user_id=<%= params[:user_id] %>&location_id=<%=
+                                   %>&user_id=<%= params[:user_id] %>&type=<%= user[6] %>&location_id=<%=
                                      params[:location_id] %><%= (!params[:src].nil? ? "&src=#{params[:src]}" : "") %>')"/>
 
                               <% else %>
@@ -135,7 +135,7 @@
                              style="margin: 5px; border: 1px dotted #efe; padding: 10px;
                              padding-left: 15px; padding-right: 15px; cursor: pointer;"
                              onclick="window.location='/edit_roles?target_id=<%= user[5]
-                           %>&user_id=<%= params[:user_id] %>&location_id=<%=
+                           %>&user_id=<%= params[:user_id] %>&type=<%= user[6] %>&location_id=<%=
                              params[:location_id] %><%= (!params[:src].nil? ? "&src=#{params[:src]}" : "") %>'" />
 
                       <% else %>
@@ -174,7 +174,7 @@
 
                   <button class="btn"
                           onclick="window.location='/edit_user_status?target_id=<%= user[5] %>&user_id=<%=
-                          @user.id %>&location_id=<%= params[:location_id] %><%=
+                          @user.id %>&type=<%= user[6] %>&location_id=<%= params[:location_id] %><%=
                           (!params[:src].nil? ? "&src=#{params[:src]}" : "") %>'">
                     Status
                   </button>

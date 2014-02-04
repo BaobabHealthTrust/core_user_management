@@ -27,6 +27,8 @@
 
   <%= hidden_field_tag "location_id", "#{params[:location_id]}" %>
 
+  <%= hidden_field_tag "type", "#{params[:type]}" %>
+
   <% if !params[:src].nil? %>
     <%= hidden_field_tag "src", "#{params[:src]}" %>
   <% end %>
