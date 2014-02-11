@@ -636,11 +636,11 @@ class CoreUserManagementController < ApplicationController
   end
 
   def location_update
-
+    
     if params[:location].strip.match(/^\d+$/)
-
-      @location = CoreLocation.find(params[:location]) rescue nil
-
+      
+      @location = CoreLocation.find(:first, :conditions => ["location_id = ? AND description = 'Workstation Location'", params[:location]]) rescue nil
+      
     else
       
       @location = CoreLocation.find_by_name(params[:location]) rescue nil
