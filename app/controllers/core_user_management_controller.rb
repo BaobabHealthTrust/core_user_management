@@ -639,7 +639,7 @@ class CoreUserManagementController < ApplicationController
     
     if params[:location].strip.match(/^\d+$/)
       
-      @location = CoreLocation.find(:first, :conditions => ["location_id = ? AND description = 'Workstation Location'", params[:location]]) rescue nil
+      @location = CoreLocation.find(:first, :conditions => ["location_id = ?", params[:location]]) rescue nil
       
     else
       
