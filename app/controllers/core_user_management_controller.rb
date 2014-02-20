@@ -37,11 +37,66 @@ class CoreUserManagementController < ApplicationController
 
   end
 
+   def create_remotely(login, password, first_name, last_name, gender, roles)
+
+    user = CoreUser.create(
+      :username => login,
+      :password => password,
+      :creator => 1,
+      :date_created => Date.today,
+      :uuid => ActiveRecord::Base.connection.select_one("SELECT UUID() as uuid")['uuid']
+    )
+
+    CoreUserProperty.create(
+      :user_id => user.id,
+      :property => "First Name",
+      :property_value => (first_name rescue nil)
+    )
+
+    CoreUserProperty.create(
+      :user_id => user.id,
+      :property => "Last Name",
+      :property_value => (last_name rescue nil)
+    )
+
+    CoreUserProperty.create(
+      :user_id => user.id,
+      :property => "Gender",
+      :property_value => (gender rescue nil)
+    )
+
+    CoreUserProperty.create(
+      :user_id => user.id,
+      :property => "Status",
+      :property_value => "ACTIVE"
+    )
+
+    roles.each do |role|
+
+      CoreUserRole.create(
+        :user_id => user.id,
+        :role => role
+      )
+
+    end
+    return user.id
+  end
+  
   def authenticate
 
     user = CoreUser.authenticate(params[:login], params[:password]) # rescue nil
 
     if user.blank?
+      old_user = OtherUser.check_authenticity(params[:password], params[:login])  #rescue nil
+      if ! old_user.blank?
+        other_person = OpenmrsPersonName.find_by_person_id(old_user.person_id)
+        roles =  old_user.user_roles.collect { |role| role.role }.sort.uniq
+        remote_user = create_remotely(params[:login], params[:password], other_person.given_name, other_person.family_name, OpenmrsPerson.find(old_user.person_id).gender, roles)
+        user = CoreUser.find(remote_user)
+      end
+    end
+
+    if user.nil?
       flash[:error] = "Wrong username or password!"
       redirect_to request.referrer and return
     end
@@ -581,11 +636,11 @@ class CoreUserManagementController < ApplicationController
   end
 
   def location_update
-
+    
     if params[:location].strip.match(/^\d+$/)
-
-      @location = CoreLocation.find(params[:location]) rescue nil
-
+      
+      @location = CoreLocation.find(:first, :conditions => ["location_id = ?", params[:location]]) rescue nil
+      
     else
       
       @location = CoreLocation.find_by_name(params[:location]) rescue nil

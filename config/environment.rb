@@ -49,6 +49,13 @@ Rails::Initializer.run do |config|
   }  
 end
 
+paralleluser = YAML.load(File.open(File.join(RAILS_ROOT, "config/database.yml"), "r"))['parallel']
+OtherUser.establish_connection(paralleluser)
+OpenmrsPerson.establish_connection(paralleluser)
+OpenmrsPersonName.establish_connection(paralleluser)
+OpenmrsUserProperty.establish_connection(paralleluser)
+OpenmrsUserRole.establish_connection(paralleluser)
+
 require "json"
 
 # Foreign key checks use a lot of resources but are useful during development
