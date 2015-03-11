@@ -2,9 +2,9 @@
 class CoreUserManagementController < ApplicationController
   unloadable
 
-  before_filter :__check_user, :except => [:login, :logout, :authenticate, :verify]
+  before_filter :__check_user, :except => [:login, :logout, :authenticate, :verify, :remote_login, :remote_logout, :remote_authentication, :get_wards, :get_user_names]
 
-  before_filter :__check_location, :except => [:login, :authenticate, :logout, :verify, :location, :location_update]
+  before_filter :__check_location, :except => [:login, :authenticate, :logout, :verify, :location, :location_update, :remote_login, :remote_logout, :remote_authentication, :get_wards,:get_user_names]
 
   def login
 
@@ -706,6 +706,88 @@ class CoreUserManagementController < ApplicationController
     render :layout => false
   end
 
+  def remote_login
+   user = CoreUser.authenticate(params[:username], params[:password]) # rescue nil
+=begin
+   if user.blank?
+    old_user = OtherUser.check_authenticity(params[:password], params[:username])  #rescue nil
+    if ! old_user.blank?
+     other_person = OpenmrsPersonName.find_by_person_id(old_user.person_id)
+     roles =  old_user.user_roles.collect { |role| role.role }.sort.uniq
+     remote_user = create_remotely(params[:login], params[:password], other_person.given_name, other_person.family_name, OpenmrsPerson.find(old_user.person_id).gender, roles)
+     user = CoreUser.find(remote_user)
+    end
+=end
+
+   if user.blank?
+    result =  "Error: Wrong username or password!"
+   end
+
+  unless user.blank?
+   CoreUserProperty.find_by_user_id_and_property(user.id, "Status").delete rescue nil
+
+   u = CoreUserProperty.create(
+     :user_id => user.id,
+     :property => "Status",
+     :property_value => "ACTIVE"
+   )
+
+   if (user.status_value.blank? rescue false) and File.exists?(file)
+    result =  "Error: Unauthorised user!"
+   elsif (user.status_value.downcase != "active" rescue false) and File.exists?(file)
+    result =  "Error: Unauthorised user!"
+   end
+
+   CoreUserProperty.find_by_user_id_and_property(user.id, "Token").delete rescue nil
+
+   u = CoreUserProperty.create(
+     :user_id => user.id,
+     :property => "Token",
+     :property_value => CoreUser.random_string(16)
+   )
+
+  end
+
+   result = u.property_value if !u.blank?
+   render :text => result
+  end
+
+
+  def remote_logout
+
+   user = CoreUserProperty.find_by_user_id_and_property(params[:id], "Token") rescue nil
+
+   if user
+    user.delete
+    result = true
+   else
+    result = false
+   end
+
+   render :text => result
+  end
+
+  def remote_authentication
+   token = CoreUserProperty.find_by_property_value(params[:token])
+
+   render :text => !token.blank?
+  end
+
+  def get_wards
+   wards = CoreLocation.find_by_sql("SELECT * FROM location WHERE description LIKE '%WARD%' ORDER BY name desc")
+   render :text => wards.collect { |x| x.name }.to_json
+  end
+
+  def get_user_names
+    u = CoreUser.find_by_username(params[:username])
+    results = {}
+   unless u.blank?
+    results[:first_name] = u.first_name
+    results[:last_name] = u.last_name
+    results[:name] = u.name
+   end
+   render :text => results.to_json
+  end
   protected
   
   def __check_user

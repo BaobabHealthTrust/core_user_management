@@ -42,6 +42,15 @@ ActionController::Routing::Routes.draw do |map|
 
   map.user_demographics  '/user_demographics',  :controller => 'core_user_management', :action => 'user_demographics'
 
+	map.remote_login '/remote_login',  :controller => 'core_user_management', :action => 'remote_login'
+
+	map.remote_logout '/remote_logout',  :controller => 'core_user_management', :action => 'remote_logout'
+
+	map.remote_authentication '/remote_authentication',  :controller => 'core_user_management', :action => 'remote_authentication'
+
+ map.get_wards '/get_wards', :controller => 'core_user_management', :action => 'get_wards'
+
+  map.get_wards '/get_user_names', :controller => 'core_user_management', :action => 'get_user_names'
   # The priority is based upon order of creation: first created -> highest priority.
 
   # Sample of regular route:
