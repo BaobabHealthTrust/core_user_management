@@ -19,8 +19,8 @@ function setupBarcode(){
 }
 
 function inform() {
-  $('infoBar'+tstCurrentPage).innerHTML = "";
-}           
+      $('infoBar'+tstCurrentPage).innerHTML = "<%= welcome_message %>";  
+    }           
 </script>
 
 <style>
@@ -34,7 +34,7 @@ function inform() {
   <label for="location">Location</label>
   <%= text_field_tag(:location, nil,
     :helpText => "#{Vocabulary.search("Workstation location")}",
-    :tt_onLoad => "__$('keyboard').style.display='none'"
+    :tt_onLoad => "__$('keyboard').style.display='none';inform();"
   ) %>
   <%= hidden_field_tag "user_id", "#{params[:user_id]}" %>
   <%= hidden_field_tag "src", "#{@destination}" %>

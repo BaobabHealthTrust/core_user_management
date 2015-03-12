@@ -96,4 +96,13 @@ module ApplicationHelper
     options_for_select(options_array, selected_months)
   end
   
+  def welcome_message
+    "Muli bwanji, enter your user information or scan your id card. <span style='font-size:0.6em;float:right;padding-right:5px;margin-right:5px;'>(#{version})</span>"  
+  end
+  
+  def version
+    style = "style='background-color:red;'" unless session[:datetime].blank?
+    "<span #{style}>#{(session[:datetime].to_date rescue Date.today).strftime('%A, %d-%b-%Y')}</span>"
+  end
+  
 end

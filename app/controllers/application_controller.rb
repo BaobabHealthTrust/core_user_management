@@ -33,7 +33,7 @@ protected
     
     file = "#{File.expand_path("#{Rails.root}/config", __FILE__)}/application.yml"
     
-    locale = YAML.load_file(file)["#{Rails.env}"]["locale"].strip
+    locale = YAML.load_file(file)["#{Rails.env}"]["locale"].strip rescue nil
     
     Vocabulary.current_locale = locale
   end
