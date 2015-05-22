@@ -102,7 +102,7 @@ module ApplicationHelper
   
   def version
     style = "style='background-color:red;'" unless session[:datetime].blank?
-    "<span #{style}>Reg. version: #{VERSION}, #{(session[:datetime].to_date rescue Date.today).strftime('%A, %d-%b-%Y')}</span>"
+    "<span #{style}>Reg. version: #{APP_VERSION}, #{(session[:datetime].to_date rescue Date.today).strftime('%A, %d-%b-%Y')}</span>"
   end
   
 end
